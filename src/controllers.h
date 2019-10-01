@@ -55,9 +55,24 @@ void _response_config() {
   jsonBuffer["ap_ssid"] = config.ap_ssid;
   // jsonBuffer["ap_passwd"] = config.ap_passwd;
   jsonBuffer["staticIp"] = config.staticIp;
-  // jsonBuffer["ip"] = config.ip.toString();
-  // jsonBuffer["gateway"] = config.gateway.toString();
-  // jsonBuffer["subnet"] = config.subnet.toString();
+
+  JsonArray ipArray = jsonBuffer.to<JsonArray>();
+  ipArray.add(config.ip[0]);
+  ipArray.add(config.ip[1]);
+  ipArray.add(config.ip[2]);
+  ipArray.add(config.ip[3]);
+
+  JsonArray gatewayArray = jsonBuffer.to<JsonArray>();
+  gatewayArray.add(config.gateway[0]);
+  gatewayArray.add(config.gateway[1]);
+  gatewayArray.add(config.gateway[2]);
+  gatewayArray.add(config.gateway[3]);
+
+  JsonArray subnetArray = jsonBuffer.to<JsonArray>();
+  subnetArray.add(config.subnet[0]);
+  subnetArray.add(config.subnet[1]);
+  subnetArray.add(config.subnet[2]);
+  subnetArray.add(config.subnet[3]);
 
   serializeJson(jsonBuffer, JSONmessageBuffer);
   http_rest_server_ssh.send(200, "application/json", JSONmessageBuffer);
@@ -137,9 +152,34 @@ void put_config() {
       if (jsonBuffer.containsKey("staticIp")) {
         config.staticIp = jsonBuffer["staticIp"];//.as<bool*>();
       }
-      // jsonBuffer["ip"] = config.ip.toString();
-      // jsonBuffer["gateway"] = config.gateway.toString();
-      // jsonBuffer["subnet"] = config.subnet.toString();
+
+      if (jsonBuffer.containsKey("ip")) {
+        JsonArray ipArray = jsonBuffer["ip"].as<JsonArray>();
+        if (ipArray.size() == 4) {
+          config.ip[0] = ipArray[0];
+          config.ip[1] = ipArray[1];
+          config.ip[2] = ipArray[2];
+          config.ip[3] = ipArray[3];
+        }
+      }
+      if (jsonBuffer.containsKey("gateway")) {
+        JsonArray gatewayArray = jsonBuffer["gateway"].as<JsonArray>();
+        if (gatewayArray.size() == 4) {
+          config.gateway[0] = gatewayArray[0];
+          config.gateway[1] = gatewayArray[1];
+          config.gateway[2] = gatewayArray[2];
+          config.gateway[3] = gatewayArray[3];
+        }
+      }
+      if (jsonBuffer.containsKey("subnet")) {
+        JsonArray subnetArray = jsonBuffer["subnet"].as<JsonArray>();
+        if (subnetArray.size() == 4) {
+          config.subnet[0] = subnetArray[0];
+          config.subnet[1] = subnetArray[1];
+          config.subnet[2] = subnetArray[2];
+          config.subnet[3] = subnetArray[3];
+        }
+      }
 
       _response_config();
       // Wait 3 seconds -> If no wait dont receive response the client

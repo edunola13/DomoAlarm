@@ -8,9 +8,9 @@ struct Config {
   char ap_ssid[20] = "DomoAlarm";
   char ap_passwd[20] = "DomoAlarm";
   bool staticIp = false;
-  IPAddress ip = IPAddress(192, 168, 0, 53);
-  IPAddress gateway = IPAddress(192, 168, 0, 1);
-  IPAddress subnet = IPAddress(255, 255, 255, 0);
+  uint8_t ip[4] = {192, 168, 0, 53};
+  uint8_t gateway[4] = {192, 168, 0, 1};
+  uint8_t subnet[4] = {255, 255, 255, 0};
 } config;
 
 struct ConfigStatus {
@@ -26,7 +26,10 @@ void initWifi() {
     Serial.println("Connecting to WiFi AP..........");
 
     if (config.staticIp) {
-      WiFi.config(config.ip, config.gateway, config.subnet);
+      IPAddress ip = IPAddress(config.ip[0], config.ip[1], config.ip[2], config.ip[3]);
+      IPAddress gateway = IPAddress(config.gateway[0], config.gateway[1], config.gateway[2], config.gateway[3]);
+      IPAddress subnet = IPAddress(config.subnet[0], config.subnet[1], config.subnet[2], config.subnet[3]);
+      WiFi.config(ip, gateway, subnet);
     }
     WiFi.begin(config.ssid, config.passwd);
     WiFi.mode(WIFI_STA);
@@ -52,46 +55,3 @@ void initWifi() {
         status.status = 'A';
     }
 }
-
-
-
-//
-//CONFIGURACION
-// void loadConfig() {
-//   DEB_DO_PRINTLN(LOAD_CONF);
-//   int pos= 0;
-//   //Compruebo que se hayan grabado datos, si no utilizo valores por defecto
-//   uint8_t load= EEPROM.read(pos++);
-//   if(load == 1) {
-//     //Lee configuracion global
-//     // readConfWifi(pos);
-//
-//     //Lee configuracion de componentes
-//     pos= 200;
-//     //Sensor Digital
-//     // for (uint8_t i= 0; i < digSenSize; i++) {
-//     //   digitalSen[i].readFromEeprom(pos);
-//     //   pos+= digitalSen[i].positions();
-//     // }
-//   } else{
-//     DEB_DO_PRINTLN(NO_CONF);
-//   }
-//   DEB_DO_PRINTLN(OK_CONF);
-// }
-//
-// void saveConfig(){
-//   DEB_DO_PRINTLN(SAVE_CONF);
-//   int pos= 0;
-//   EEPROM.update(pos++, 1);
-//   //Escribo configuracion global
-//   // saveConfWifi(pos);
-//
-//   pos= 200;
-//   //Sensor Digital
-//   // for (uint8_t i= 0; i < digSenSize; i++) {
-//   //   digitalSen[i].saveInEeprom(pos);
-//   //   pos+= digitalSen[i].positions();
-//   // }
-//
-//   DEB_DO_PRINTLN(OK_SAVE_CONF);
-// }
