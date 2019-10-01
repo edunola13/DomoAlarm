@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266WebServerSecure.h>
-// #include <EEPROM.h>
+#include <EEPROM.h>
 #include <ArduinoJson.h>
 
 #define DOMO_DEBUG
@@ -62,6 +62,7 @@ dyHrT0u/Tnxe9kQ=
 
 #include "config.h"
 #include "alarm.h"
+#include "memory.h"
 #include "controllers.h"
 
 void setup(void) {
@@ -70,12 +71,11 @@ void setup(void) {
     DEB_DO_PRINTLN(MSG_START);
 
     // Leer config de Epprom
-    // loadConfig();
+    loadConfig();
     // Inicializo WiFi
     initWifi();
     // Inicializar sensores
     initAlarm();
-    // dig.begin();
 
     // Config rest server routing
     config_rest_server_routing();

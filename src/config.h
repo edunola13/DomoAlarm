@@ -41,6 +41,7 @@ void initWifi() {
         Serial.print(config.ssid);
         Serial.print("--- IP: ");
         status.ip = WiFi.localIP();
+        Serial.println(status.ip);
         status.status = 'C';
     }
     else {
@@ -51,6 +52,8 @@ void initWifi() {
         status.status = 'A';
     }
 }
+
+
 
 //
 //CONFIGURACION

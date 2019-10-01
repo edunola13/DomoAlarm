@@ -3,6 +3,7 @@
 void get_status();
 void get_config();
 void put_config();
+void post_config();
 void get_alarm();
 void put_alarm();
 void put_alarm_on();
@@ -30,6 +31,7 @@ void config_rest_server_routing() {
   http_rest_server_ssh.on("/status", HTTP_GET, get_status);  // Estado de Conexion
   http_rest_server_ssh.on("/config", HTTP_GET, get_config);  // Configuracion de Conexion
   http_rest_server_ssh.on("/config", HTTP_PUT, put_config);
+  http_rest_server_ssh.on("/config", HTTP_POST, post_config);
   http_rest_server_ssh.on("/alarm", HTTP_GET, get_alarm);  // Alarma - Configuracion y estado
   http_rest_server_ssh.on("/alarm", HTTP_PUT, put_alarm);
   http_rest_server_ssh.on("/alarm/on", HTTP_PUT, put_alarm_on);
@@ -53,9 +55,9 @@ void _response_config() {
   jsonBuffer["ap_ssid"] = config.ap_ssid;
   // jsonBuffer["ap_passwd"] = config.ap_passwd;
   jsonBuffer["staticIp"] = config.staticIp;
-  jsonBuffer["ip"] = config.ip.toString();
-  jsonBuffer["gateway"] = config.gateway.toString();
-  jsonBuffer["subnet"] = config.subnet.toString();
+  // jsonBuffer["ip"] = config.ip.toString();
+  // jsonBuffer["gateway"] = config.gateway.toString();
+  // jsonBuffer["subnet"] = config.subnet.toString();
 
   serializeJson(jsonBuffer, JSONmessageBuffer);
   http_rest_server_ssh.send(200, "application/json", JSONmessageBuffer);
@@ -133,7 +135,7 @@ void put_config() {
         value.toCharArray(config.ap_passwd, 20);
       }
       if (jsonBuffer.containsKey("staticIp")) {
-          config.staticIp = jsonBuffer["staticIp"];//.as<bool*>();
+        config.staticIp = jsonBuffer["staticIp"];//.as<bool*>();
       }
       // jsonBuffer["ip"] = config.ip.toString();
       // jsonBuffer["gateway"] = config.gateway.toString();
@@ -141,12 +143,17 @@ void put_config() {
 
       _response_config();
       // Wait 3 seconds -> If no wait dont receive response the client
-      long initial = millis() + 3000;
-      while (initial > millis()) {
-        delay(5);
-      }
-      initWifi();
+      // long initial = millis() + 3000;
+      // while (initial > millis()) {
+      //   delay(5);
+      // }
+      // initWifi();
   }
+}
+
+void post_config() {
+  saveConfig();
+  http_rest_server_ssh.send(200);
 }
 
 void get_alarm() {

@@ -1,5 +1,5 @@
 struct Alarm {
-  char status = 'O';  // O=On, F=Off, A=Activada, S=Sonando
+  char status = 'F';  // O=On, F=Off, A=Activada, S=Sonando
   long refreshTime = 250;  // 0.25 Segundo
   long lastRefreshTime = 0;
   long timeToSound = 2000;  // 20000;  // Tiempo para desactivar la alarma y (salir despues de activar - NO POR AHORA)
@@ -11,7 +11,7 @@ struct Alarm {
 #define hornPin D4
 #define buzzerPin D2
 #define senSize 8
-DigitalSensor sensors[senSize] = {DigitalSensor(D0, 1), DigitalSensor(D1, 2)};
+DigitalSensor sensors[senSize];
 
 // #define eventSize 10
 // struct Event {
@@ -23,6 +23,7 @@ DigitalSensor sensors[senSize] = {DigitalSensor(D0, 1), DigitalSensor(D1, 2)};
 
 
 void initAlarm() {
+  alarm.status = 'F';
   pinMode(buzzerPin, OUTPUT);
 }
 

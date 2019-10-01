@@ -77,17 +77,18 @@ uint8_t DigitalSensor::positions(){
 	return 10;
 }
 void DigitalSensor::readFromEeprom(int pos){
-	/*uint8_t val= EEPROM.read(pos++);
+	uint8_t val = 0;
+  EEPROM.get(pos++, val);
 	if(val == 1){
-		this->pin= EEPROM.read(pos++);
-		this->type= EEPROM.read(pos++);
+		EEPROM.get(pos++, this->pin);
+    EEPROM.get(pos++, this->type);
 		this->begin();
-	}*/
+	}
 }
 void DigitalSensor::saveInEeprom(int pos){
-	/*EEPROM.update(pos++, this->started);
+	EEPROM.put(pos++, this->started);
 	if(this->started){
-		EEPROM.update(pos++, this->pin);
-		EEPROM.update(pos++, this->type);
-	}*/
+		EEPROM.put(pos++, this->pin);
+		EEPROM.put(pos++, this->type);
+	}
 }
