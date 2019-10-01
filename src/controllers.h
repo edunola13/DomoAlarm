@@ -47,8 +47,8 @@ void config_rest_server_routing() {
 }
 
 void _response_config() {
-  StaticJsonDocument<255> jsonBuffer;
-  char JSONmessageBuffer[255];
+  StaticJsonDocument<500> jsonBuffer;
+  char JSONmessageBuffer[500];
 
   jsonBuffer["ssid"] = config.ssid;
   // jsonBuffer["passwd"] = config.passwd;
@@ -56,19 +56,19 @@ void _response_config() {
   // jsonBuffer["ap_passwd"] = config.ap_passwd;
   jsonBuffer["staticIp"] = config.staticIp;
 
-  JsonArray ipArray = jsonBuffer.to<JsonArray>();
+  JsonArray ipArray = jsonBuffer["ip"].to<JsonArray>();
   ipArray.add(config.ip[0]);
   ipArray.add(config.ip[1]);
   ipArray.add(config.ip[2]);
   ipArray.add(config.ip[3]);
 
-  JsonArray gatewayArray = jsonBuffer.to<JsonArray>();
+  JsonArray gatewayArray = jsonBuffer["gateway"].to<JsonArray>();
   gatewayArray.add(config.gateway[0]);
   gatewayArray.add(config.gateway[1]);
   gatewayArray.add(config.gateway[2]);
   gatewayArray.add(config.gateway[3]);
 
-  JsonArray subnetArray = jsonBuffer.to<JsonArray>();
+  JsonArray subnetArray = jsonBuffer["subnet"].to<JsonArray>();
   subnetArray.add(config.subnet[0]);
   subnetArray.add(config.subnet[1]);
   subnetArray.add(config.subnet[2]);
