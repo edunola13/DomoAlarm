@@ -13,6 +13,16 @@
 #include <DigitalSensor.h>
 #include "messages.h"
 
+bool isTime(long startTime, long maxTime) {
+  long now = millis();
+  if (now >= startTime) {
+    return (now - startTime) >= maxTime;
+  } else {
+    startTime = startTime - 4294967296;
+    return (now - startTime) >= maxTime;
+  }
+}
+
 #define HTTP_REST_PORT 80
 #define WIFI_RETRY_DELAY 500
 #define MAX_WIFI_INIT_RETRY 50

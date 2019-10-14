@@ -81,12 +81,14 @@ void checkAlarm() {
     }
   } else if (alarm.status == 'A') {
     // CALCULAR EL TIEMPO EN QUE LA ALARMA SE LANZARA
-    if(millis() - alarm.lastTimeToSound >= alarm.timeToSound || millis() - alarm.lastTimeToSound < 0) {
+    // if(millis() - alarm.lastTimeToSound >= alarm.timeToSound || millis() - alarm.lastTimeToSound < 0) {
+    if (isTime(alarm.lastTimeToSound, alarm.timeToSound)) {
       soundAlarm();
     }
   } else if (alarm.status == 'S') {
     // CALCULAR TIEMPO QUE DEBE SONAR
-    if(millis() - alarm.lastSoundTime >= alarm.soundTime || millis() - alarm.lastSoundTime < 0) {
+    // if(millis() - alarm.lastSoundTime >= alarm.soundTime || millis() - alarm.lastSoundTime < 0) {
+    if (isTime(alarm.lastSoundTime, alarm.soundTime)) {
       resetAlarm();
     }
   }

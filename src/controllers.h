@@ -212,14 +212,17 @@ void put_alarm() {
   }
   else {
       // String value = "";
-      if (jsonBuffer.containsKey("status")) {
-        alarm.status = jsonBuffer["status"];
-      }
+      // if (jsonBuffer.containsKey("status")) {
+      //   alarm.status = jsonBuffer["status"];
+      // }
       if (jsonBuffer.containsKey("timeToSound")) {
         alarm.timeToSound = jsonBuffer["timeToSound"];
       }
       if (jsonBuffer.containsKey("refreshTime")) {
         alarm.refreshTime = jsonBuffer["refreshTime"];
+      }
+      if (jsonBuffer.containsKey("soundTime")) {
+        alarm.soundTime = jsonBuffer["soundTime"];
       }
 
       _response_alarm();
@@ -227,6 +230,14 @@ void put_alarm() {
 }
 
 void put_alarm_on() {
+  for (uint8_t i= 0; i < senSize; i++) {
+    if(sensors[i].getStarted()){
+      if (sensors[i].getIn()) {
+        http_rest_server_ssh.send(400, "application/json", "{\"error\": \"Hay un sensor activo\"}");
+        return;
+      }
+    }
+  }
   onAlarm();
   http_rest_server_ssh.send(200);
 }
