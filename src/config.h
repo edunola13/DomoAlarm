@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 // ESP Web Server Library to host a web page
 #include <ESP8266WebServer.h>
+#include <PubSubClient.h>
 
 struct Config {
   char ssid[30] = "FibertelEdu18";
@@ -17,6 +18,28 @@ struct ConfigStatus {
   char status = 'I';  // I=Iniciando, C=Conectado, A=Access Point
   IPAddress ip;
 } status;
+
+WiFiClient espClient;
+PubSubClient clientMqtt(espClient);
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+
+  // Switch on the LED if an 1 was received as first character
+  if ((char)payload[0] == '1') {
+    // digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
+    // but actually the LED is on; this is because
+    // it is acive low on the ESP-01)
+  } else {
+    // digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+  }
+}
 
 void initWifi() {
     WiFi.setAutoConnect(false);
@@ -54,4 +77,19 @@ void initWifi() {
         status.ip = WiFi.localIP();
         status.status = 'A';
     }
+
+    clientMqtt.setServer("192.168.0.12", 1883);
+    clientMqtt.setCallback(callback);
+}
+
+void reconnect() {
+  Serial.print("Attempting MQTT connection...");
+  // Attempt to connect
+  if (clientMqtt.connect("ESP8266Client", "eduardo_n", "eduardo_n")) {
+    Serial.println("connected");
+    // Once connected, publish an announcement...
+    clientMqtt.publish("casa/despacho/temperatura", "Enviando el primer mensaje");
+    // ... and resubscribe
+    clientMqtt.subscribe("casa/despacho/luz");
+  }
 }

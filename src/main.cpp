@@ -27,10 +27,10 @@ bool isTime(long startTime, long maxTime) {
 #define WIFI_RETRY_DELAY 500
 #define MAX_WIFI_INIT_RETRY 50
 
-BearSSL::ESP8266WebServerSecure http_rest_server_ssh(443);
+//BearSSL::ESP8266WebServerSecure http_rest_server_ssh(443);
 ESP8266WebServer http_rest_server(HTTP_REST_PORT);
 
-static const char serverCert[] PROGMEM = R"EOF(
+/*static const char serverCert[] PROGMEM = R"EOF(
 -----BEGIN CERTIFICATE-----
 MIIC6jCCAlOgAwIBAgIUV4hbn80tCIONpKF4Et6b3Ynq/X8wDQYJKoZIhvcNAQEL
 BQAwejELMAkGA1UEBhMCUk8xCjAIBgNVBAgMAUIxEjAQBgNVBAcMCUJ1Y2hhcmVz
@@ -68,7 +68,7 @@ ba5qgJ+tzbkK/nViJYPKTzNP7DK++SKfdqEixF55o5cHxE2nps56PsUCQGNeROlX
 jR0oV96dz/cL0aZYc0mU88N1mWJNu8Dvz4OKREDPzNoWsirJikQNxb3daEBh6EFh
 dyHrT0u/Tnxe9kQ=
 -----END PRIVATE KEY-----
-)EOF";
+)EOF";*/
 
 #include "config.h"
 #include "alarm.h"
@@ -102,5 +102,10 @@ void loop(void) {
 
     // Handle Requests
     http_rest_server.handleClient();
-    http_rest_server_ssh.handleClient();
+    // http_rest_server_ssh.handleClient();
+
+    if (!clientMqtt.connected()) {
+      reconnect();
+    }
+    clientMqtt.loop();
 }

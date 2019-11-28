@@ -16,7 +16,31 @@ void get_sensor();
 void put_sensor();
 
 void config_rest_server_routing() {
-  http_rest_server.on("/", []() {
+  /* SIN HTTPS */
+  http_rest_server.on("/", HTTP_GET, []() {
+      http_rest_server.send(200, "text/html", "Running");
+  });
+
+  // HANDLE
+  http_rest_server.on("/status", HTTP_GET, get_status);  // Estado de Conexion
+  http_rest_server.on("/config", HTTP_GET, get_config);  // Configuracion de Conexion
+  http_rest_server.on("/config", HTTP_PUT, put_config);
+  http_rest_server.on("/config", HTTP_POST, post_config);
+  http_rest_server.on("/alarm", HTTP_GET, get_alarm);  // Alarma - Configuracion y estado
+  http_rest_server.on("/alarm", HTTP_PUT, put_alarm);
+  http_rest_server.on("/alarm/on", HTTP_PUT, put_alarm_on);
+  http_rest_server.on("/alarm/off", HTTP_PUT, put_alarm_off);
+  http_rest_server.on("/alarm/activate", HTTP_PUT, put_activate_alarm);
+  http_rest_server.on("/alarm/sound", HTTP_PUT, put_sound_alarm);
+  http_rest_server.on("/alarm/reset", HTTP_PUT, put_reset_alarm);
+  http_rest_server.on("/sensors", HTTP_GET, get_sensors);  // Sensores
+  http_rest_server.on("/sensors/detail", HTTP_GET, get_sensor);
+  http_rest_server.on("/sensors/detail", HTTP_PUT, put_sensor);
+  // http_rest_server.on('route', function);  // No filtra por METHOD -> despues pedir con http_rest_server.method()
+  http_rest_server.begin();
+
+  /* CON HTTPS */
+  /*http_rest_server.on("/", []() {
     http_rest_server.sendHeader("Location", String("https://") + WiFi.localIP().toString(), true);
     http_rest_server.send(301, "text/plain", "");
   });
@@ -43,12 +67,14 @@ void config_rest_server_routing() {
   http_rest_server_ssh.on("/sensors/detail", HTTP_GET, get_sensor);
   http_rest_server_ssh.on("/sensors/detail", HTTP_PUT, put_sensor);
   // http_rest_server_ssh.on('route', function);  // No filtra por METHOD -> despues pedir con http_rest_server_ssh.method()
-  http_rest_server_ssh.begin();
+  http_rest_server_ssh.begin();*/
 }
 
 void _response_config() {
   StaticJsonDocument<500> jsonBuffer;
   char JSONmessageBuffer[500];
+
+  jsonBuffer["timeStart"] = millis();
 
   jsonBuffer["ssid"] = config.ssid;
   // jsonBuffer["passwd"] = config.passwd;
@@ -75,7 +101,7 @@ void _response_config() {
   subnetArray.add(config.subnet[3]);
 
   serializeJson(jsonBuffer, JSONmessageBuffer);
-  http_rest_server_ssh.send(200, "application/json", JSONmessageBuffer);
+  http_rest_server.send(200, "application/json", JSONmessageBuffer);
 }
 
 void _response_alarm() {
@@ -88,7 +114,7 @@ void _response_alarm() {
   jsonBuffer["refreshTime"] = alarm.refreshTime;
 
   serializeJson(jsonBuffer, JSONmessageBuffer);
-  http_rest_server_ssh.send(200, "application/json", JSONmessageBuffer);
+  http_rest_server.send(200, "application/json", JSONmessageBuffer);
 }
 
 void _response_sensor(uint8_t id) {
@@ -102,7 +128,7 @@ void _response_sensor(uint8_t id) {
   jsonBuffer["in"] = sensors[id].getIn();
 
   serializeJson(jsonBuffer, JSONmessageBuffer);
-  http_rest_server_ssh.send(200, "application/json", JSONmessageBuffer);
+  http_rest_server.send(200, "application/json", JSONmessageBuffer);
 }
 
 void get_status() {
@@ -114,7 +140,7 @@ void get_status() {
   jsonBuffer["actualIp"] = status.ip.toString();
 
   serializeJson(jsonBuffer, JSONmessageBuffer);
-  http_rest_server_ssh.send(200, "application/json", JSONmessageBuffer);
+  http_rest_server.send(200, "application/json", JSONmessageBuffer);
 }
 
 void get_config() {
@@ -123,13 +149,13 @@ void get_config() {
 
 void put_config() {
   StaticJsonDocument<500> jsonBuffer;
-  String post_body = http_rest_server_ssh.arg("plain");
+  String post_body = http_rest_server.arg("plain");
 
   // Deserialize the JSON document
   DeserializationError error = deserializeJson(jsonBuffer, post_body);
   if (error) {
       Serial.println("error in parsin json body");
-      http_rest_server_ssh.send(400, "application/json", "{\"error\": \"Invalid Json\"}");
+      http_rest_server.send(400, "application/json", "{\"error\": \"Invalid Json\"}");
   }
   else {
       // String value = "";
@@ -193,7 +219,7 @@ void put_config() {
 
 void post_config() {
   saveConfig();
-  http_rest_server_ssh.send(200);
+  http_rest_server.send(200);
 }
 
 void get_alarm() {
@@ -202,13 +228,13 @@ void get_alarm() {
 
 void put_alarm() {
   StaticJsonDocument<500> jsonBuffer;
-  String post_body = http_rest_server_ssh.arg("plain");
+  String post_body = http_rest_server.arg("plain");
 
   // Deserialize the JSON document
   DeserializationError error = deserializeJson(jsonBuffer, post_body);
   if (error) {
       Serial.println("error in parsin json body");
-      http_rest_server_ssh.send(400, "application/json", "{\"error\": \"Invalid Json\"}");
+      http_rest_server.send(400, "application/json", "{\"error\": \"Invalid Json\"}");
   }
   else {
       // String value = "";
@@ -233,33 +259,33 @@ void put_alarm_on() {
   for (uint8_t i= 0; i < senSize; i++) {
     if(sensors[i].getStarted()){
       if (sensors[i].getIn()) {
-        http_rest_server_ssh.send(400, "application/json", "{\"error\": \"Hay un sensor activo\"}");
+        http_rest_server.send(400, "application/json", "{\"error\": \"Hay un sensor activo\"}");
         return;
       }
     }
   }
   onAlarm();
-  http_rest_server_ssh.send(200);
+  http_rest_server.send(200);
 }
 
 void put_alarm_off() {
   offAlarm();
-  http_rest_server_ssh.send(200);
+  http_rest_server.send(200);
 }
 
 void put_activate_alarm() {
   activeAlarm();
-  http_rest_server_ssh.send(200);
+  http_rest_server.send(200);
 }
 
 void put_sound_alarm() {
   soundAlarm();
-  http_rest_server_ssh.send(200);
+  http_rest_server.send(200);
 }
 
 void put_reset_alarm() {
   resetAlarm();
-  http_rest_server_ssh.send(200);
+  http_rest_server.send(200);
 }
 
 void get_sensors() {
@@ -277,31 +303,31 @@ void get_sensors() {
   }
 
   serializeJson(jsonBuffer, JSONmessageBuffer);
-  http_rest_server_ssh.send(200, "application/json", JSONmessageBuffer);
+  http_rest_server.send(200, "application/json", JSONmessageBuffer);
 }
 
 void get_sensor() {
-  uint8_t id = http_rest_server_ssh.arg("id").toInt();
+  uint8_t id = http_rest_server.arg("id").toInt();
   if (id < 0 || id >= senSize) {
-      http_rest_server_ssh.send(404);
+      http_rest_server.send(404);
   }
   _response_sensor(id);
 }
 
 void put_sensor() {
-  uint8_t id = http_rest_server_ssh.arg("id").toInt();
+  uint8_t id = http_rest_server.arg("id").toInt();
   if (id < 0 || id >= senSize) {
-      http_rest_server_ssh.send(404);
+      http_rest_server.send(404);
   }
 
   StaticJsonDocument<500> jsonBuffer;
-  String post_body = http_rest_server_ssh.arg("plain");
+  String post_body = http_rest_server.arg("plain");
 
   // Deserialize the JSON document
   DeserializationError error = deserializeJson(jsonBuffer, post_body);
   if (error) {
       Serial.println("error in parsin json body");
-      http_rest_server_ssh.send(400, "application/json", "{\"error\": \"Invalid Json\"}");
+      http_rest_server.send(400, "application/json", "{\"error\": \"Invalid Json\"}");
   }
   else {
     bool start = jsonBuffer["start"];
