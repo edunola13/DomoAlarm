@@ -4,10 +4,17 @@
 #include <PubSubClient.h>
 
 struct Config {
+  char name[20] = "ESP Alarm";
+  char access_key[30] = "ESP Alarm";
+  char mq_server[15] = "";
+  char mq_user[10] = "";
+  char mq_pass[10] = "";
+
   char ssid[30] = "FibertelEdu18";
   char passwd[30] = "0143507310";
   char ap_ssid[20] = "DomoAlarm";
   char ap_passwd[20] = "DomoAlarm";
+
   bool staticIp = false;
   uint8_t ip[4] = {192, 168, 0, 53};
   uint8_t gateway[4] = {192, 168, 0, 1};
@@ -78,18 +85,22 @@ void initWifi() {
         status.status = 'A';
     }
 
-    clientMqtt.setServer("192.168.0.12", 1883);
-    clientMqtt.setCallback(callback);
+    if (String(config.mq_server) != "") {
+      clientMqtt.setServer(config.mq_server, 1883);
+      clientMqtt.setCallback(callback);
+    }
 }
 
 void reconnect() {
+  if (String(config.mq_server) == "") {
+    return;
+  }
+
   Serial.print("Attempting MQTT connection...");
   // Attempt to connect
-  if (clientMqtt.connect("ESP8266Client", "eduardo_n", "eduardo_n")) {
+  if (clientMqtt.connect("ESP8266Client", config.mq_user, config.mq_pass)) {
     Serial.println("connected");
-    // Once connected, publish an announcement...
-    clientMqtt.publish("casa/despacho/temperatura", "Enviando el primer mensaje");
     // ... and resubscribe
-    clientMqtt.subscribe("casa/despacho/luz");
+    // clientMqtt.subscribe("casa/despacho/luz");
   }
 }

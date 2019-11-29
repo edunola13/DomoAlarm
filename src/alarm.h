@@ -29,26 +29,35 @@ void initAlarm() {
 
 void onAlarm() {
   alarm.status = 'O';
+  if (clientMqtt.connected()) {
+    clientMqtt.publish("domo/alarm/on", "Alarma Prendida");
+  }
 }
 
 void offAlarm() {
   alarm.status = 'F';
+  if (clientMqtt.connected()) {
+    clientMqtt.publish("domo/alarm/off", "Alarma Apagada");
+  }
 }
 
 void activeAlarm() {
-  Serial.println("Active");
   alarm.status = 'A';
   alarm.lastTimeToSound = millis();
+  if (clientMqtt.connected()) {
+    clientMqtt.publish("domo/alarm/activate", "Alarma Activada");
+  }
 }
 
 void soundAlarm() {
-  Serial.println("Sound");
   alarm.status = 'S';
   alarm.lastSoundTime = millis();
+  if (clientMqtt.connected()) {
+    clientMqtt.publish("domo/alarm/sound", "Alarma Sonando");
+  }
 }
 
 void resetAlarm() {
-  Serial.println("Reset");
   if (alarm.status == 'A' || alarm.status == 'S') {
     alarm.status = 'O';
   }

@@ -1,5 +1,10 @@
 #include <ESP8266WebServer.h>
 
+void not_found();
+void forbidden();
+bool has_access();
+
+void get_info();
 void get_status();
 void get_config();
 void put_config();
@@ -22,6 +27,7 @@ void config_rest_server_routing() {
   });
 
   // HANDLE
+  http_rest_server.on("/info", HTTP_GET, get_info);  // Info de identificacion
   http_rest_server.on("/status", HTTP_GET, get_status);  // Estado de Conexion
   http_rest_server.on("/config", HTTP_GET, get_config);  // Configuracion de Conexion
   http_rest_server.on("/config", HTTP_PUT, put_config);
@@ -37,7 +43,6 @@ void config_rest_server_routing() {
   http_rest_server.on("/sensors/detail", HTTP_GET, get_sensor);
   http_rest_server.on("/sensors/detail", HTTP_PUT, put_sensor);
   // http_rest_server.on('route', function);  // No filtra por METHOD -> despues pedir con http_rest_server.method()
-  http_rest_server.begin();
 
   /* CON HTTPS */
   /*http_rest_server.on("/", []() {
@@ -52,6 +57,7 @@ void config_rest_server_routing() {
   });
 
   // HANDLE
+  http_rest_server_ssh.on("/info", HTTP_GET, get_info);  // Info de identificacion
   http_rest_server_ssh.on("/status", HTTP_GET, get_status);  // Estado de Conexion
   http_rest_server_ssh.on("/config", HTTP_GET, get_config);  // Configuracion de Conexion
   http_rest_server_ssh.on("/config", HTTP_PUT, put_config);
@@ -67,7 +73,38 @@ void config_rest_server_routing() {
   http_rest_server_ssh.on("/sensors/detail", HTTP_GET, get_sensor);
   http_rest_server_ssh.on("/sensors/detail", HTTP_PUT, put_sensor);
   // http_rest_server_ssh.on('route', function);  // No filtra por METHOD -> despues pedir con http_rest_server_ssh.method()
-  http_rest_server_ssh.begin();*/
+  */
+
+  http_rest_server.onNotFound(not_found);
+  //here the list of headers to be recorded
+  const char * headerkeys[] = {"Key"} ;
+  size_t headerkeyssize = sizeof(headerkeys)/sizeof(char*);
+  //ask server to track these headers
+  http_rest_server.collectHeaders(headerkeys, headerkeyssize );
+
+  http_rest_server.begin();
+
+  // http_rest_server_ssh.begin();
+}
+
+void not_found() {
+  http_rest_server.send(404);
+}
+
+void forbidden() {
+  http_rest_server.send(403);
+}
+
+bool has_access() {
+  if (http_rest_server.hasHeader("Key")){
+    String key = http_rest_server.header("Key");
+    if (key == String(config.access_key)) {
+      return true;
+    }
+  }
+
+  forbidden();
+  return false;
 }
 
 void _response_config() {
@@ -75,6 +112,12 @@ void _response_config() {
   char JSONmessageBuffer[500];
 
   jsonBuffer["timeStart"] = millis();
+
+  jsonBuffer["name"] = config.name;
+  jsonBuffer["access_key"] = config.access_key;
+  jsonBuffer["mq_server"] = config.mq_server;
+  jsonBuffer["mq_user"] = config.mq_user;
+  jsonBuffer["mq_pass"] = config.mq_pass;
 
   jsonBuffer["ssid"] = config.ssid;
   // jsonBuffer["passwd"] = config.passwd;
@@ -131,23 +174,51 @@ void _response_sensor(uint8_t id) {
   http_rest_server.send(200, "application/json", JSONmessageBuffer);
 }
 
+void get_info() {
+  StaticJsonDocument<250> jsonBuffer;
+  char JSONmessageBuffer[250];
+
+  // Status
+  String(ESP.getChipId(), HEX);
+  jsonBuffer["uniqueId"] = String(ESP.getChipId(), HEX);
+  jsonBuffer["type"] = "ES_AL_1";
+  jsonBuffer["actualIp"] = status.ip.toString();
+  jsonBuffer["name"] = config.name;
+
+  serializeJson(jsonBuffer, JSONmessageBuffer);
+  http_rest_server.send(200, "application/json", JSONmessageBuffer);
+}
+
 void get_status() {
+  if (! has_access()) {
+    return;
+  }
+
   StaticJsonDocument<100> jsonBuffer;
   char JSONmessageBuffer[100];
 
   // Status
   jsonBuffer["status"] = String(status.status);
   jsonBuffer["actualIp"] = status.ip.toString();
+  jsonBuffer["mq_server"] = config.mq_server;
 
   serializeJson(jsonBuffer, JSONmessageBuffer);
   http_rest_server.send(200, "application/json", JSONmessageBuffer);
 }
 
 void get_config() {
+  if (! has_access()) {
+    return;
+  }
+
   _response_config();
 }
 
 void put_config() {
+  if (! has_access()) {
+    return;
+  }
+
   StaticJsonDocument<500> jsonBuffer;
   String post_body = http_rest_server.arg("plain");
 
@@ -158,7 +229,33 @@ void put_config() {
       http_rest_server.send(400, "application/json", "{\"error\": \"Invalid Json\"}");
   }
   else {
-      // String value = "";
+      char name[20] = "ESP Alarm";
+      char access_key[30] = "ESP Alarm";
+      char mq_server[10] = "";
+      char mq_user[10] = "";
+      char mq_pass[10] = "";
+
+      if (jsonBuffer.containsKey("name")) {
+        String value = jsonBuffer["name"];
+        value.toCharArray(config.name, 20);
+      }
+      if (jsonBuffer.containsKey("access_key")) {
+        String value = jsonBuffer["access_key"];
+        value.toCharArray(config.access_key, 30);
+      }
+      if (jsonBuffer.containsKey("mq_server")) {
+        String value = jsonBuffer["mq_server"];
+        value.toCharArray(config.mq_server, 15);
+      }
+      if (jsonBuffer.containsKey("mq_user")) {
+        String value = jsonBuffer["mq_user"];
+        value.toCharArray(config.mq_user, 10);
+      }
+      if (jsonBuffer.containsKey("mq_pass")) {
+        String value = jsonBuffer["mq_pass"];
+        value.toCharArray(config.mq_pass, 10);
+      }
+
       if (jsonBuffer.containsKey("ssid")) {
         String value = jsonBuffer["ssid"];
         value.toCharArray(config.ssid, 30);
@@ -209,24 +306,36 @@ void put_config() {
 
       _response_config();
       // Wait 3 seconds -> If no wait dont receive response the client
-      // long initial = millis() + 3000;
-      // while (initial > millis()) {
-      //   delay(5);
-      // }
-      // initWifi();
+      long initial = millis() + 3000;
+      while (initial > millis()) {
+        delay(5);
+      }
+      initWifi();
   }
 }
 
 void post_config() {
+  if (! has_access()) {
+    return;
+  }
+
   saveConfig();
   http_rest_server.send(200);
 }
 
 void get_alarm() {
+  if (! has_access()) {
+    return;
+  }
+
   _response_alarm();
 }
 
 void put_alarm() {
+  if (! has_access()) {
+    return;
+  }
+
   StaticJsonDocument<500> jsonBuffer;
   String post_body = http_rest_server.arg("plain");
 
@@ -256,6 +365,10 @@ void put_alarm() {
 }
 
 void put_alarm_on() {
+  if (! has_access()) {
+    return;
+  }
+
   for (uint8_t i= 0; i < senSize; i++) {
     if(sensors[i].getStarted()){
       if (sensors[i].getIn()) {
@@ -269,26 +382,46 @@ void put_alarm_on() {
 }
 
 void put_alarm_off() {
+  if (! has_access()) {
+    return;
+  }
+
   offAlarm();
   http_rest_server.send(200);
 }
 
 void put_activate_alarm() {
+  if (! has_access()) {
+    return;
+  }
+
   activeAlarm();
   http_rest_server.send(200);
 }
 
 void put_sound_alarm() {
+  if (! has_access()) {
+    return;
+  }
+
   soundAlarm();
   http_rest_server.send(200);
 }
 
 void put_reset_alarm() {
+  if (! has_access()) {
+    return;
+  }
+
   resetAlarm();
   http_rest_server.send(200);
 }
 
 void get_sensors() {
+  if (! has_access()) {
+    return;
+  }
+
   StaticJsonDocument<1000> jsonBuffer;
   char JSONmessageBuffer[1000];
   JsonArray array = jsonBuffer.to<JsonArray>();
@@ -307,6 +440,10 @@ void get_sensors() {
 }
 
 void get_sensor() {
+  if (! has_access()) {
+    return;
+  }
+
   uint8_t id = http_rest_server.arg("id").toInt();
   if (id < 0 || id >= senSize) {
       http_rest_server.send(404);
@@ -315,6 +452,10 @@ void get_sensor() {
 }
 
 void put_sensor() {
+  if (! has_access()) {
+    return;
+  }
+
   uint8_t id = http_rest_server.arg("id").toInt();
   if (id < 0 || id >= senSize) {
       http_rest_server.send(404);
