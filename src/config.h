@@ -5,7 +5,7 @@
 
 struct Config {
   char name[20] = "ESP Alarm";
-  char access_key[30] = "ESP Alarm";
+  char access_key[30] = "";
   char mq_server[15] = "";
   char mq_user[10] = "";
   char mq_pass[10] = "";

@@ -5,7 +5,6 @@ void forbidden();
 bool has_access();
 
 void get_info();
-void get_status();
 void get_config();
 void put_config();
 void post_config();
@@ -28,8 +27,7 @@ void config_rest_server_routing() {
 
   // HANDLE
   http_rest_server.on("/info", HTTP_GET, get_info);  // Info de identificacion
-  http_rest_server.on("/status", HTTP_GET, get_status);  // Estado de Conexion
-  http_rest_server.on("/config", HTTP_GET, get_config);  // Configuracion de Conexion
+  http_rest_server.on("/config", HTTP_GET, get_config);  // Configuracion de Conexion y General
   http_rest_server.on("/config", HTTP_PUT, put_config);
   http_rest_server.on("/config", HTTP_POST, post_config);
   http_rest_server.on("/alarm", HTTP_GET, get_alarm);  // Alarma - Configuracion y estado
@@ -58,7 +56,6 @@ void config_rest_server_routing() {
 
   // HANDLE
   http_rest_server_ssh.on("/info", HTTP_GET, get_info);  // Info de identificacion
-  http_rest_server_ssh.on("/status", HTTP_GET, get_status);  // Estado de Conexion
   http_rest_server_ssh.on("/config", HTTP_GET, get_config);  // Configuracion de Conexion
   http_rest_server_ssh.on("/config", HTTP_PUT, put_config);
   http_rest_server_ssh.on("/config", HTTP_POST, post_config);
@@ -182,25 +179,10 @@ void get_info() {
   String(ESP.getChipId(), HEX);
   jsonBuffer["uniqueId"] = String(ESP.getChipId(), HEX);
   jsonBuffer["type"] = "ES_AL_1";
-  jsonBuffer["actualIp"] = status.ip.toString();
+  jsonBuffer["version"] = 1;
   jsonBuffer["name"] = config.name;
-
-  serializeJson(jsonBuffer, JSONmessageBuffer);
-  http_rest_server.send(200, "application/json", JSONmessageBuffer);
-}
-
-void get_status() {
-  if (! has_access()) {
-    return;
-  }
-
-  StaticJsonDocument<100> jsonBuffer;
-  char JSONmessageBuffer[100];
-
-  // Status
-  jsonBuffer["status"] = String(status.status);
   jsonBuffer["actualIp"] = status.ip.toString();
-  jsonBuffer["mq_server"] = config.mq_server;
+  jsonBuffer["status"] = String(status.status);
 
   serializeJson(jsonBuffer, JSONmessageBuffer);
   http_rest_server.send(200, "application/json", JSONmessageBuffer);
