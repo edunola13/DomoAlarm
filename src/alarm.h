@@ -21,6 +21,11 @@ DigitalSensor sensors[senSize];
 //   uint8_t sensor;
 // } events[eventSize] = {};
 
+// TOPICS
+#define TOPIC_ON "DOMO/ES_AL_1/alarm/on"
+#define TOPIC_OFF "DOMO/ES_AL_1/alarm/off"
+#define TOPIC_ACTIVATE "DOMO/ES_AL_1/alarm/activate"
+#define TOPIC_SOUND "DOMO/ES_AL_1/alarm/sound"
 
 void initAlarm() {
   alarm.status = 'F';
@@ -30,14 +35,26 @@ void initAlarm() {
 void onAlarm() {
   alarm.status = 'O';
   if (clientMqtt.connected()) {
-    clientMqtt.publish("domo/alarm/on", "Alarma Prendida");
+    StaticJsonDocument<50> jsonBuffer;
+    char JSONmessageBuffer[50];
+    jsonBuffer["uniqueId"] = String(ESP.getChipId(), HEX);
+    jsonBuffer["status"] = String(alarm.status);
+    serializeJson(jsonBuffer, JSONmessageBuffer);
+
+    clientMqtt.publish(TOPIC_ON, JSONmessageBuffer);
   }
 }
 
 void offAlarm() {
   alarm.status = 'F';
   if (clientMqtt.connected()) {
-    clientMqtt.publish("domo/alarm/off", "Alarma Apagada");
+    StaticJsonDocument<50> jsonBuffer;
+    char JSONmessageBuffer[50];
+    jsonBuffer["uniqueId"] = String(ESP.getChipId(), HEX);
+    jsonBuffer["status"] = String(alarm.status);
+    serializeJson(jsonBuffer, JSONmessageBuffer);
+
+    clientMqtt.publish(TOPIC_OFF, JSONmessageBuffer);
   }
 }
 
@@ -45,7 +62,13 @@ void activeAlarm() {
   alarm.status = 'A';
   alarm.lastTimeToSound = millis();
   if (clientMqtt.connected()) {
-    clientMqtt.publish("domo/alarm/activate", "Alarma Activada");
+    StaticJsonDocument<50> jsonBuffer;
+    char JSONmessageBuffer[50];
+    jsonBuffer["uniqueId"] = String(ESP.getChipId(), HEX);
+    jsonBuffer["status"] = String(alarm.status);
+    serializeJson(jsonBuffer, JSONmessageBuffer);
+
+    clientMqtt.publish(TOPIC_ACTIVATE, JSONmessageBuffer);
   }
 }
 
@@ -53,7 +76,13 @@ void soundAlarm() {
   alarm.status = 'S';
   alarm.lastSoundTime = millis();
   if (clientMqtt.connected()) {
-    clientMqtt.publish("domo/alarm/sound", "Alarma Sonando");
+    StaticJsonDocument<50> jsonBuffer;
+    char JSONmessageBuffer[50];
+    jsonBuffer["uniqueId"] = String(ESP.getChipId(), HEX);
+    jsonBuffer["status"] = String(alarm.status);
+    serializeJson(jsonBuffer, JSONmessageBuffer);
+
+    clientMqtt.publish(TOPIC_SOUND, JSONmessageBuffer);
   }
 }
 

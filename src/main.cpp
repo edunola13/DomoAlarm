@@ -9,9 +9,13 @@
 //#define USE_WDT
 //#define WDT_TIME WDTO_8S
 
+#define DEVICE_TYPE "ES_AL_1"
+
 #include <common_initial.h>
 #include <DigitalSensor.h>
 #include "messages.h"
+
+String device_type = "ES_AL_1";
 
 bool isTime(long startTime, long maxTime) {
   long now = millis();

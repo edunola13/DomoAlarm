@@ -178,7 +178,7 @@ void get_info() {
   // Status
   String(ESP.getChipId(), HEX);
   jsonBuffer["uniqueId"] = String(ESP.getChipId(), HEX);
-  jsonBuffer["type"] = "ES_AL_1";
+  jsonBuffer["type"] = DEVICE_TYPE;
   jsonBuffer["version"] = 1;
   jsonBuffer["name"] = config.name;
   jsonBuffer["actualIp"] = status.ip.toString();
